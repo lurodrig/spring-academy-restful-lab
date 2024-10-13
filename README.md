@@ -20,9 +20,9 @@ $ ./gradlew --version
 Gradle 8.10.2
 ------------------------------------------------------------
 
-$ ./gradlew bootRun
-
 $ ./gradlew test
+
+$ ./gradlew bootRun
 
 $ curl http://localhost:8080/accounts
 ```
