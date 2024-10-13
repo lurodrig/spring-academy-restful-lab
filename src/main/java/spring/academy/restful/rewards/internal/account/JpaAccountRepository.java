@@ -4,10 +4,12 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Repository;
 
 /**
  * An account repository that uses JPA to find accounts.
  */
+@Repository
 public class JpaAccountRepository implements AccountRepository {
 
 	public static final String ACCOUNT_BY_CC_QUERY = "select ACCOUNT_ID from T_ACCOUNT_CREDIT_CARD where NUMBER = :ccn";
