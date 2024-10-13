@@ -26,7 +26,6 @@ $ ./gradlew test
 
 $ curl http://localhost:8080/accounts
 ```
-**Note:** `AccountClientTests` do what they promise and test the `AccountController` using `org.springframework.web.client.RestTemplate`, so they need the application to be running in order to succeed. You can run them with `$ ./gradlew test --tests "spring.academy.restful.common.accounts.client.AccountClientTests"`
 
 **Note:** [hsqldb is running in server mode](https://github.com/lurodrig/hsqldb-in-server-mode)
 
