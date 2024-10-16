@@ -68,19 +68,20 @@ public class AccountClientTests {
     private ResponseEntity<Account> callCreateAccount(Account account) throws URISyntaxException {
         ResponseEntity<Account> response = restTemplate.postForEntity("/accounts", account, Account.class);
         assertNotNull(response);
+        assertEquals(response.getStatusCode(), HttpStatus.CREATED);
         // If the status is not CREATED do not bother continuing processing the response, something
         // wrong has happened, probably a 409, lets the caller of the method deal with it
-        if (response.getStatusCode().equals(HttpStatus.CREATED)) {
-            Account retrievedAccount = restTemplate.getForObject(new URI(Objects.requireNonNull(response.getHeaders().get("Location")).getFirst()), Account.class);
-            assertNotNull(retrievedAccount);
-            assertEquals(account.getNumber(), retrievedAccount.getNumber());
 
-            Beneficiary accountBeneficiary = account.getBeneficiaries().iterator().next();
-            Beneficiary retrievedAccountBeneficiary = retrievedAccount.getBeneficiaries().iterator().next();
+        Account retrievedAccount = restTemplate.getForObject(new URI(Objects.requireNonNull(response.getHeaders().get("Location")).getFirst()), Account.class);
+        assertNotNull(retrievedAccount);
+        assertEquals(account.getNumber(), retrievedAccount.getNumber());
 
-            assertEquals(accountBeneficiary.getName(), retrievedAccountBeneficiary.getName());
-            assertNotNull(retrievedAccount.getEntityId());
-        }
+        Beneficiary accountBeneficiary = account.getBeneficiaries().iterator().next();
+        Beneficiary retrievedAccountBeneficiary = retrievedAccount.getBeneficiaries().iterator().next();
+
+        assertEquals(accountBeneficiary.getName(), retrievedAccountBeneficiary.getName());
+        assertNotNull(retrievedAccount.getEntityId());
+
         return response;
     }
 
@@ -91,15 +92,13 @@ public class AccountClientTests {
         account1.addBeneficiary("Jane Doe");
         callCreateAccount(account1);
         Account account2 = new Account(number, "Federico Martillo");
-        account2.addBeneficiary("Enrica La Puerca");
-        assertEquals(callCreateAccount(account2).getStatusCode(),HttpStatus.CONFLICT);
+        account2.addBeneficiary("Enriqueta Lapuerta");
+        assertEquals(callCreateAccount(account2).getStatusCode(), HttpStatus.CONFLICT);
     }
 
     @Test
-//	@Disabled
     public void addAndDeleteBeneficiaryWithoutResettingAllocationPercentages() {
         // perform both add and delete to avoid issues with side effects
-
         String beneficiaryName = "David";
         Long accountId = 1L;
         addAndDeleteBeneficiary(beneficiaryName, accountId);
