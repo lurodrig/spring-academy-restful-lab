@@ -3,9 +3,9 @@ package spring.academy.restful.jwt.utils;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import spring.academy.restful.config.JwtConfig;
 
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.function.Consumer;
 
 public class TokenGenerator {
@@ -20,10 +20,10 @@ public class TokenGenerator {
         JwtClaimsSet.Builder builder = JwtClaimsSet.builder()
                 .issuedAt(Instant.now())
                 .expiresAt(Instant.now().plusSeconds(100000))
-                .subject("sarah1")
-                .issuer("http://localhost:9000")
-                .audience(Arrays.asList("cashcard-client"))
-                .claim("scp", Arrays.asList("cashcard:read", "cashcard:write"));
+                .subject(JwtConfig.SUBJECT)
+                .issuer(JwtConfig.ISSUER)
+                .audience(JwtConfig.AUDIENCE)
+                .claim(JwtConfig.SCOPE_CLAIM, JwtConfig.SCOPE);
         consumer.accept(builder);
         JwtEncoderParameters parameters = JwtEncoderParameters.from(builder.build());
         return this.jwtEncoder.encode(parameters).getTokenValue();
