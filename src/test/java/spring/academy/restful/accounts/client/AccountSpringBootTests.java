@@ -4,9 +4,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
 import spring.academy.restful.common.money.Percentage;
+import spring.academy.restful.config.JwtConfig;
+import spring.academy.restful.jwt.utils.TokenGenerator;
 import spring.academy.restful.rewards.internal.account.Account;
 import spring.academy.restful.rewards.internal.account.Beneficiary;
 
@@ -22,13 +26,19 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@Import({JwtConfig.class})
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class AccountClientTests {
+public class AccountSpringBootTests {
 
     @Autowired
     private final TestRestTemplate restTemplate = new TestRestTemplate();
 
     private final Random random = new Random();
+
+    @Autowired
+    private JwtEncoder jwtEncoder;
+
+    private final TokenGenerator tokenGenerator = new TokenGenerator(jwtEncoder);
 
     @Test
     public void listAccounts() {
@@ -68,7 +78,7 @@ public class AccountClientTests {
     private ResponseEntity<Account> callCreateAccount(Account account) throws URISyntaxException {
         ResponseEntity<Account> response = restTemplate.postForEntity("/accounts", account, Account.class);
         assertNotNull(response);
-        assertEquals(response.getStatusCode(), HttpStatus.CREATED);
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
         // If the status is not CREATED do not bother continuing processing the response, something
         // wrong has happened, probably a 409, lets the caller of the method deal with it
 
@@ -93,7 +103,7 @@ public class AccountClientTests {
         callCreateAccount(account1);
         Account account2 = new Account(number, "Federico Martillo");
         account2.addBeneficiary("Enriqueta Lapuerta");
-        assertEquals(callCreateAccount(account2).getStatusCode(), HttpStatus.CONFLICT);
+        assertEquals(HttpStatus.CONFLICT, callCreateAccount(account2).getStatusCode());
     }
 
     @Test
@@ -144,7 +154,7 @@ public class AccountClientTests {
         restTemplate.delete(beneficiaryLocation);
 
         ResponseEntity<Beneficiary> response = restTemplate.getForEntity(beneficiaryLocation, Beneficiary.class);
-        assertEquals(response.getStatusCode(), HttpStatus.NOT_FOUND);
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     }
 
 }

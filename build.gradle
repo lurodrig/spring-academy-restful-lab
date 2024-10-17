@@ -22,9 +22,11 @@ dependencies {
 	implementation "com.fasterxml.jackson.core:jackson-annotations"
 	implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
 	implementation 'org.hsqldb:hsqldb'
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'io.jsonwebtoken:jjwt-api:0.12.6'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
