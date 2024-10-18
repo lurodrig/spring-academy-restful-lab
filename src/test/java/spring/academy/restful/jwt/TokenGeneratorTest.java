@@ -1,10 +1,9 @@
-package spring.academy.restful.jwt.utils;
+package spring.academy.restful.jwt;
 
 import io.jsonwebtoken.Claims;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtValidationException;
@@ -14,7 +13,6 @@ import spring.academy.restful.config.JwtConfig;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -28,11 +26,11 @@ public class TokenGeneratorTest {
 
     private static final Logger log = LoggerFactory.getLogger(TokenGeneratorTest.class);
 
-    private JwtEncoder jwtEncoder;
+    private final JwtEncoder jwtEncoder;
 
-    private JwtDecoder jwtDecoder;
+    private final JwtDecoder jwtDecoder;
 
-    private TokenGenerator tokenGenerator;
+    private final TokenGenerator tokenGenerator;
 
     public TokenGeneratorTest(JwtEncoder jwtEncoder, JwtDecoder jwtDecoder) {
         this.jwtEncoder = jwtEncoder;
@@ -42,18 +40,12 @@ public class TokenGeneratorTest {
 
     @Test
     void generateDefaultTokenWhenEmptyBuilderIsValid() {
-        Consumer<JwtClaimsSet.Builder> builderConsumer = new Consumer<JwtClaimsSet.Builder>() {
-            @Override
-            public void accept(JwtClaimsSet.Builder builder) {
-                log.info("Empty JWTClaimsSet.Builder ");
-            }
-        };
-        String token = tokenGenerator.generate(builderConsumer);
+        String token = tokenGenerator.generate(Defaults.EMPTY_BUILDER_COMSUMER);
         assertNotNull(token);
-        assertEquals(JwtConfig.SUBJECT, jwtDecoder.decode(token).getClaim(Claims.SUBJECT));
-        assertEquals(JwtConfig.ISSUER, jwtDecoder.decode(token).getClaim(Claims.ISSUER));
-        assertEquals(JwtConfig.AUDIENCE, jwtDecoder.decode(token).getClaim(Claims.AUDIENCE));
-        assertEquals(JwtConfig.SCOPE, jwtDecoder.decode(token).getClaim(JwtConfig.SCOPE_CLAIM));
+        assertEquals(Defaults.SUBJECT, jwtDecoder.decode(token).getClaim(Claims.SUBJECT));
+        assertEquals(Defaults.ISSUER, jwtDecoder.decode(token).getClaim(Claims.ISSUER));
+        assertEquals(Defaults.AUDIENCE, jwtDecoder.decode(token).getClaim(Claims.AUDIENCE));
+        assertEquals(Defaults.SCOPE, jwtDecoder.decode(token).getClaim(JwtConfig.SCOPE_CLAIM));
     }
 
     @Test

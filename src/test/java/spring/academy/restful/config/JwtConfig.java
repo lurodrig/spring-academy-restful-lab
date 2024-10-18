@@ -19,6 +19,7 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import spring.academy.restful.jwt.Defaults;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -30,18 +31,12 @@ import java.util.List;
 @Configuration
 public class JwtConfig {
 
-    // Defaults
-    public static final String SUBJECT = "johndoe";
-    public static final String ISSUER = "http://localhost:9000";
-    public static final List<String> AUDIENCE = List.of("rewards-client");
-    public static final List<String> SCOPE = List.of("BANKER", "CUSTOMER");
-
     public static final String SCOPE_CLAIM = "scp";
 
-    @Value("classpath:authz.pub")
+    @Value("classpath:keys/authz.pub")
     private Resource publicKeyResource;
 
-    @Value("classpath:authz.pem")
+    @Value("classpath:keys/authz.pem")
     private Resource privateKeyResource;
 
     private RSAPrivateKey pem;
@@ -62,9 +57,9 @@ public class JwtConfig {
     @Bean
     JwtDecoder jwtDecoder() {
         NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withPublicKey(pub).build();
-        OAuth2TokenValidator<Jwt> defaults = JwtValidators.createDefaultWithIssuer(ISSUER);
+        OAuth2TokenValidator<Jwt> defaults = JwtValidators.createDefaultWithIssuer(Defaults.ISSUER);
         OAuth2TokenValidator<Jwt> audience = new JwtClaimValidator<List<Object>>(JwtClaimNames.AUD,
-                (aud) -> !Collections.disjoint(aud, AUDIENCE));
+                (aud) -> !Collections.disjoint(aud, Defaults.AUDIENCE));
         jwtDecoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(defaults, audience));
         return jwtDecoder;
     }

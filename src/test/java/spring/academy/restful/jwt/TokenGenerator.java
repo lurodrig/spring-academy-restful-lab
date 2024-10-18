@@ -1,4 +1,4 @@
-package spring.academy.restful.jwt.utils;
+package spring.academy.restful.jwt;
 
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
@@ -20,10 +20,10 @@ public class TokenGenerator {
         JwtClaimsSet.Builder builder = JwtClaimsSet.builder()
                 .issuedAt(Instant.now())
                 .expiresAt(Instant.now().plusSeconds(100000))
-                .subject(JwtConfig.SUBJECT)
-                .issuer(JwtConfig.ISSUER)
-                .audience(JwtConfig.AUDIENCE)
-                .claim(JwtConfig.SCOPE_CLAIM, JwtConfig.SCOPE);
+                .subject(Defaults.SUBJECT)
+                .issuer(Defaults.ISSUER)
+                .audience(Defaults.AUDIENCE)
+                .claim(JwtConfig.SCOPE_CLAIM, Defaults.SCOPE);
         consumer.accept(builder);
         JwtEncoderParameters parameters = JwtEncoderParameters.from(builder.build());
         return this.jwtEncoder.encode(parameters).getTokenValue();

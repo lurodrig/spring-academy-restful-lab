@@ -1,34 +1,43 @@
 package spring.academy.restful.accounts.client;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import spring.academy.restful.common.money.Percentage;
-import spring.academy.restful.config.JwtConfig;
-import spring.academy.restful.jwt.utils.TokenGenerator;
+import spring.academy.restful.jwt.Defaults;
+import spring.academy.restful.jwt.TokenGenerator;
 import spring.academy.restful.rewards.internal.account.Account;
 import spring.academy.restful.rewards.internal.account.Beneficiary;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
+import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@Import({JwtConfig.class})
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class AccountSpringBootTests {
+
+    private static final String AUTHORIZATION_HEADER = "Authorization";
+    private static final String BEARER_AUTHENTICATION = "Bearer ";
 
     @Autowired
     private final TestRestTemplate restTemplate = new TestRestTemplate();
@@ -38,12 +47,25 @@ public class AccountSpringBootTests {
     @Autowired
     private JwtEncoder jwtEncoder;
 
-    private final TokenGenerator tokenGenerator = new TokenGenerator(jwtEncoder);
+    private TokenGenerator tokenGenerator;
+
+    @BeforeEach
+    void setup() {
+        tokenGenerator = new TokenGenerator(jwtEncoder);
+    }
 
     @Test
     public void listAccounts() {
-
-        Account[] accounts = restTemplate.getForObject("/accounts", Account[].class);
+        ResponseEntity<?> response = makeAuthenticatedHttpRequest(
+                "/accounts",
+                HttpMethod.GET,
+                Account[].class,
+                null,
+                List.of(MediaType.APPLICATION_JSON),
+                Defaults.EMPTY_BUILDER_COMSUMER
+        );
+        assertNotNull(response);
+        Account[] accounts = (Account[]) response.getBody();
 
         assertNotNull(accounts);
         assertTrue(accounts.length >= 21);
@@ -54,8 +76,16 @@ public class AccountSpringBootTests {
 
     @Test
     public void getAccount() {
-
-        Account account = restTemplate.getForObject("/accounts/{accountId}", Account.class, 0); // Modify this line to use the restTemplate
+        ResponseEntity<?> response = makeAuthenticatedHttpRequest(
+                "/accounts/0",
+                HttpMethod.GET,
+                Account.class,
+                null,
+                List.of(MediaType.APPLICATION_JSON),
+                Defaults.EMPTY_BUILDER_COMSUMER
+        );
+        assertNotNull(response);
+        Account account = (Account) response.getBody();
 
         assertNotNull(account);
         assertEquals("Keith and Keri Donald", account.getName());
@@ -72,27 +102,7 @@ public class AccountSpringBootTests {
         Account account = new Account(number, "John Doe");
         account.addBeneficiary("Jane Doe");
 
-        callCreateAccount(account);
-    }
-
-    private ResponseEntity<Account> callCreateAccount(Account account) throws URISyntaxException {
-        ResponseEntity<Account> response = restTemplate.postForEntity("/accounts", account, Account.class);
-        assertNotNull(response);
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        // If the status is not CREATED do not bother continuing processing the response, something
-        // wrong has happened, probably a 409, lets the caller of the method deal with it
-
-        Account retrievedAccount = restTemplate.getForObject(new URI(Objects.requireNonNull(response.getHeaders().get("Location")).getFirst()), Account.class);
-        assertNotNull(retrievedAccount);
-        assertEquals(account.getNumber(), retrievedAccount.getNumber());
-
-        Beneficiary accountBeneficiary = account.getBeneficiaries().iterator().next();
-        Beneficiary retrievedAccountBeneficiary = retrievedAccount.getBeneficiaries().iterator().next();
-
-        assertEquals(accountBeneficiary.getName(), retrievedAccountBeneficiary.getName());
-        assertNotNull(retrievedAccount.getEntityId());
-
-        return response;
+        newAccount(account);
     }
 
     @Test
@@ -100,10 +110,10 @@ public class AccountSpringBootTests {
         String number = "123123123";
         Account account1 = new Account(number, "John Doe");
         account1.addBeneficiary("Jane Doe");
-        callCreateAccount(account1);
+        newAccount(account1);
         Account account2 = new Account(number, "Federico Martillo");
         account2.addBeneficiary("Enriqueta Lapuerta");
-        assertEquals(HttpStatus.CONFLICT, callCreateAccount(account2).getStatusCode());
+        assertEquals(HttpStatus.CONFLICT, newAccount(account2).getStatusCode());
     }
 
     @Test
@@ -118,42 +128,188 @@ public class AccountSpringBootTests {
     public void deleteBeneficiaryAndResetAllocationPercentages() {
         String beneficiaryName = "Antolin";
         Long accountId = 3L;
-        restTemplate.delete("/accounts/" + accountId + "/beneficiaries/" + beneficiaryName);
-        Account account = restTemplate.getForObject("/accounts/{accountId}", Account.class, accountId);
+        ResponseEntity<?> response = makeAuthenticatedHttpRequest(
+                "/accounts/" + accountId + "/beneficiaries/" + beneficiaryName,
+                HttpMethod.DELETE,
+                Void.class,
+                null,
+                List.of(MediaType.APPLICATION_JSON),
+                Defaults.EMPTY_BUILDER_COMSUMER
+        );
+        assertNotNull(response);
+
+        response = makeAuthenticatedHttpRequest(
+                "/accounts/{accountId}",
+                HttpMethod.GET,
+                Account.class,
+                null,
+                List.of(MediaType.APPLICATION_JSON),
+                Defaults.EMPTY_BUILDER_COMSUMER,
+                accountId
+        );
+        assertNotNull(response);
+        Account account = (Account) response.getBody();
+
         assertNotNull(account);
         assertTotalPercentageIsCorrect(account, "100%");
         // Add it again or next run will fail
-        URI beneficiaryLocation = restTemplate.postForLocation("/accounts/{accountId}/beneficiaries", beneficiaryName, accountId);
+        response = makeAuthenticatedHttpRequest(
+                "/accounts/{accountId}/beneficiaries",
+                HttpMethod.POST,
+                Object.class,
+                beneficiaryName,
+                List.of(MediaType.APPLICATION_JSON),
+                Defaults.EMPTY_BUILDER_COMSUMER,
+                accountId
+        );
+        assertNotNull(response);
+        URI beneficiaryLocation = URI.create(Objects.requireNonNull(response.getHeaders().get(HttpHeaders.LOCATION)).getFirst());
         assertNotNull(beneficiaryLocation);
+
         Map<String, Percentage> allocationPercentages = new HashMap<String, Percentage>();
         allocationPercentages.put("Antolin", Percentage.valueOf("20%"));
         allocationPercentages.put("Argus", Percentage.valueOf("30%"));
         allocationPercentages.put("Gian", Percentage.valueOf("35%"));
         allocationPercentages.put("Argeo", Percentage.valueOf("15%"));
-        restTemplate.put("/accounts/{accountId}", allocationPercentages, accountId);
-        account = restTemplate.getForObject("/accounts/{accountId}", Account.class, account.getEntityId());
+
+        makeAuthenticatedHttpRequest(
+                "/accounts/{accountId}",
+                HttpMethod.PUT,
+                Void.class,
+                allocationPercentages,
+                List.of(MediaType.APPLICATION_JSON),
+                Defaults.EMPTY_BUILDER_COMSUMER,
+                accountId
+        );
+        assertNotNull(response);
+
+
+        response = makeAuthenticatedHttpRequest(
+                "/accounts/{accountId}",
+                HttpMethod.GET,
+                Account.class,
+                null,
+                List.of(MediaType.APPLICATION_JSON),
+                Defaults.EMPTY_BUILDER_COMSUMER,
+                account.getEntityId()
+        );
+        assertNotNull(response);
+        account = (Account) response.getBody();
         assertNotNull(account);
         assertTotalPercentageIsCorrect(account, "100%");
     }
 
+    private ResponseEntity<?> newAccount(Account account) throws URISyntaxException {
+        ResponseEntity<?> response = makeAuthenticatedHttpRequest(
+                "/accounts",
+                HttpMethod.POST,
+                Account.class,
+                account,
+                List.of(MediaType.APPLICATION_JSON),
+                Defaults.EMPTY_BUILDER_COMSUMER
+        );
+
+        assertNotNull(response);
+        // If the status is not CREATED do not bother continuing processing the response, something
+        // wrong has happened, probably a 409, lets the caller of the method deal with it
+        if (response.getStatusCode() == HttpStatus.CREATED) {
+            response = makeAuthenticatedHttpRequest(
+                    String.valueOf(new URI(Objects.requireNonNull(response.getHeaders().get("Location")).getFirst())),
+                    HttpMethod.GET,
+                    Account.class,
+                    null,
+                    List.of(MediaType.APPLICATION_JSON),
+                    Defaults.EMPTY_BUILDER_COMSUMER
+            );
+
+            assertNotNull(response);
+            Account retrievedAccount = (Account) response.getBody();
+            assertNotNull(retrievedAccount);
+            assertEquals(account.getNumber(), retrievedAccount.getNumber());
+
+            Beneficiary accountBeneficiary = account.getBeneficiaries().iterator().next();
+            Beneficiary retrievedAccountBeneficiary = retrievedAccount.getBeneficiaries().iterator().next();
+
+            assertEquals(accountBeneficiary.getName(), retrievedAccountBeneficiary.getName());
+            assertNotNull(retrievedAccount.getEntityId());
+        }
+        return response;
+    }
+
+    private ResponseEntity<?> makeAuthenticatedHttpRequest(
+            String url,
+            HttpMethod httpMethod,
+            Class responseClass,
+            Object request,
+            List<MediaType> acceptedMediaTypes,
+            Consumer<JwtClaimsSet.Builder> consumer,
+            Object... urlPathVariable) {
+        HttpHeaders httpRequestHeaders = new HttpHeaders();
+        httpRequestHeaders.add(AUTHORIZATION_HEADER, BEARER_AUTHENTICATION + tokenGenerator.generate(consumer));
+        if (acceptedMediaTypes != null) {
+            httpRequestHeaders.setAccept(acceptedMediaTypes);
+        }
+
+        HttpEntity<?> httpRequestEntity = request == null ? new HttpEntity<>(httpRequestHeaders) : new HttpEntity<>(request, httpRequestHeaders);
+
+        return restTemplate.exchange(url, httpMethod, httpRequestEntity, responseClass, urlPathVariable);
+    }
+
     private static void assertTotalPercentageIsCorrect(Account account, String totalPercentage) {
-        Optional<Percentage> total = account.getBeneficiaries().stream()
-                .map(b -> b.getAllocationPercentage())
-                .reduce(Percentage::add);
+        Optional<Percentage> total = account.getBeneficiaries().stream().map(b -> b.getAllocationPercentage()).reduce(Percentage::add);
         assertEquals(Percentage.valueOf(totalPercentage), total.get(), "Total percentage of the beneficiaries should be " + totalPercentage);
     }
 
     private void addAndDeleteBeneficiary(String beneficiaryName, Long accountId) {
-        URI beneficiaryLocation = restTemplate.postForLocation("/accounts/{accountId}/beneficiaries", beneficiaryName, accountId);
-        assertNotNull(beneficiaryLocation);
+        // Crete the beneficiary, it will belong to the account with accountId
+        ResponseEntity<?> response = makeAuthenticatedHttpRequest(
+                "/accounts/{accountId}/beneficiaries",
+                HttpMethod.POST,
+                Object.class,
+                beneficiaryName,
+                List.of(MediaType.APPLICATION_JSON),
+                Defaults.EMPTY_BUILDER_COMSUMER,
+                accountId
+        );
+        assertNotNull(response);
+        URI beneficiaryLocation = URI.create(Objects.requireNonNull(response.getHeaders().get(HttpHeaders.LOCATION)).getFirst());
 
-        Beneficiary newBeneficiary = restTemplate.getForObject(beneficiaryLocation, Beneficiary.class); // Modify this line to use the restTemplate
+        // Check the beneficiary has been created
+        response = makeAuthenticatedHttpRequest(
+                beneficiaryLocation.toString(),
+                HttpMethod.GET,
+                Beneficiary.class,
+                null,
+                List.of(MediaType.APPLICATION_JSON),
+                Defaults.EMPTY_BUILDER_COMSUMER
+        );
+        assertNotNull(response);
+        Beneficiary newBeneficiary = (Beneficiary) response.getBody();
         assertNotNull(newBeneficiary);
         assertEquals(beneficiaryName, newBeneficiary.getName());
 
-        restTemplate.delete(beneficiaryLocation);
+        // Remove the beneficiary
+        response = makeAuthenticatedHttpRequest(
+                beneficiaryLocation.toString(),
+                HttpMethod.DELETE,
+                Void.class,
+                null,
+                List.of(MediaType.APPLICATION_JSON),
+                Defaults.EMPTY_BUILDER_COMSUMER
+        );
+        assertNotNull(response);
+        assertEquals(HttpStatus.NO_CONTENT,response.getStatusCode());
 
-        ResponseEntity<Beneficiary> response = restTemplate.getForEntity(beneficiaryLocation, Beneficiary.class);
+        // Check the deleted beneficiary can not be found
+        response = makeAuthenticatedHttpRequest(
+                beneficiaryLocation.toString(),
+                HttpMethod.GET,
+                Beneficiary.class,
+                beneficiaryName,
+                List.of(MediaType.APPLICATION_JSON),
+                Defaults.EMPTY_BUILDER_COMSUMER
+        );
+        assertNotNull(response);
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     }
 
