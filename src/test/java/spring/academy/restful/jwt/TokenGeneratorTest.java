@@ -12,6 +12,7 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import spring.academy.restful.config.JwtConfig;
 
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -40,12 +41,12 @@ public class TokenGeneratorTest {
 
     @Test
     void generateDefaultTokenWhenEmptyBuilderIsValid() {
-        String token = tokenGenerator.generate(Defaults.EMPTY_BUILDER_COMSUMER);
+        String token = tokenGenerator.generate(Constants.EMPTY_BUILDER_COMSUMER);
         assertNotNull(token);
-        assertEquals(Defaults.SUBJECT, jwtDecoder.decode(token).getClaim(Claims.SUBJECT));
-        assertEquals(Defaults.ISSUER, jwtDecoder.decode(token).getClaim(Claims.ISSUER));
-        assertEquals(Defaults.AUDIENCE, jwtDecoder.decode(token).getClaim(Claims.AUDIENCE));
-        assertEquals(Defaults.SCOPE, jwtDecoder.decode(token).getClaim(JwtConfig.SCOPE_CLAIM));
+        assertEquals(Constants.SUBJECT, jwtDecoder.decode(token).getClaim(Claims.SUBJECT));
+        assertEquals(Constants.ISSUER, jwtDecoder.decode(token).getClaim(Claims.ISSUER));
+        assertEquals(Constants.AUDIENCE, jwtDecoder.decode(token).getClaim(Claims.AUDIENCE));
+        assertEquals(Arrays.asList(Constants.SCOPE), jwtDecoder.decode(token).getClaim(JwtConfig.SCOPE_CLAIM));
     }
 
     @Test

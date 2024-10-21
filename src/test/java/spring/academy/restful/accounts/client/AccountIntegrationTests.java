@@ -14,7 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import spring.academy.restful.common.money.Percentage;
-import spring.academy.restful.jwt.Defaults;
+import spring.academy.restful.jwt.Constants;
 import spring.academy.restful.jwt.TokenGenerator;
 import spring.academy.restful.rewards.internal.account.Account;
 import spring.academy.restful.rewards.internal.account.Beneficiary;
@@ -34,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class AccountSpringBootTests {
+public class AccountIntegrationTests {
 
     private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String BEARER_AUTHENTICATION = "Bearer ";
@@ -55,14 +55,14 @@ public class AccountSpringBootTests {
     }
 
     @Test
-    public void listAccounts() {
+    public void shouldListAccounts() {
         ResponseEntity<?> response = makeAuthenticatedHttpRequest(
                 "/accounts",
                 HttpMethod.GET,
                 Account[].class,
                 null,
                 List.of(MediaType.APPLICATION_JSON),
-                Defaults.EMPTY_BUILDER_COMSUMER
+                Constants.EMPTY_BUILDER_COMSUMER
         );
         assertNotNull(response);
         Account[] accounts = (Account[]) response.getBody();
@@ -75,14 +75,14 @@ public class AccountSpringBootTests {
     }
 
     @Test
-    public void getAccount() {
+    public void shouldGetAccount() {
         ResponseEntity<?> response = makeAuthenticatedHttpRequest(
                 "/accounts/0",
                 HttpMethod.GET,
                 Account.class,
                 null,
                 List.of(MediaType.APPLICATION_JSON),
-                Defaults.EMPTY_BUILDER_COMSUMER
+                Constants.EMPTY_BUILDER_COMSUMER
         );
         assertNotNull(response);
         Account account = (Account) response.getBody();
@@ -96,28 +96,28 @@ public class AccountSpringBootTests {
     }
 
     @Test
-    public void createAccount() throws URISyntaxException {
+    public void shouldCreateAccount() throws URISyntaxException {
         // Use a unique number to avoid conflicts
         String number = String.format("12345%4d", random.nextInt(10000));
         Account account = new Account(number, "John Doe");
         account.addBeneficiary("Jane Doe");
 
-        newAccount(account);
+        createAccount(account);
     }
 
     @Test
-    public void serverRespondsWithConflictStatusWhenConflictingAccountNumber() throws URISyntaxException {
+    public void serverShouldRespondsWithConflictStatusWhenConflictingAccountNumber() throws URISyntaxException {
         String number = "123123123";
         Account account1 = new Account(number, "John Doe");
         account1.addBeneficiary("Jane Doe");
-        newAccount(account1);
+        createAccount(account1);
         Account account2 = new Account(number, "Federico Martillo");
         account2.addBeneficiary("Enriqueta Lapuerta");
-        assertEquals(HttpStatus.CONFLICT, newAccount(account2).getStatusCode());
+        assertEquals(HttpStatus.CONFLICT, createAccount(account2).getStatusCode());
     }
 
     @Test
-    public void addAndDeleteBeneficiaryWithoutResettingAllocationPercentages() {
+    public void shouldAddAndDeleteBeneficiaryWithoutResettingAllocationPercentages() {
         // perform both add and delete to avoid issues with side effects
         String beneficiaryName = "David";
         Long accountId = 1L;
@@ -125,7 +125,7 @@ public class AccountSpringBootTests {
     }
 
     @Test
-    public void deleteBeneficiaryAndResetAllocationPercentages() {
+    public void shouldDeleteBeneficiaryAndResetAllocationPercentages() {
         String beneficiaryName = "Antolin";
         Long accountId = 3L;
         ResponseEntity<?> response = makeAuthenticatedHttpRequest(
@@ -134,7 +134,7 @@ public class AccountSpringBootTests {
                 Void.class,
                 null,
                 List.of(MediaType.APPLICATION_JSON),
-                Defaults.EMPTY_BUILDER_COMSUMER
+                Constants.EMPTY_BUILDER_COMSUMER
         );
         assertNotNull(response);
 
@@ -144,7 +144,7 @@ public class AccountSpringBootTests {
                 Account.class,
                 null,
                 List.of(MediaType.APPLICATION_JSON),
-                Defaults.EMPTY_BUILDER_COMSUMER,
+                Constants.EMPTY_BUILDER_COMSUMER,
                 accountId
         );
         assertNotNull(response);
@@ -159,7 +159,7 @@ public class AccountSpringBootTests {
                 Object.class,
                 beneficiaryName,
                 List.of(MediaType.APPLICATION_JSON),
-                Defaults.EMPTY_BUILDER_COMSUMER,
+                Constants.EMPTY_BUILDER_COMSUMER,
                 accountId
         );
         assertNotNull(response);
@@ -178,7 +178,7 @@ public class AccountSpringBootTests {
                 Void.class,
                 allocationPercentages,
                 List.of(MediaType.APPLICATION_JSON),
-                Defaults.EMPTY_BUILDER_COMSUMER,
+                Constants.EMPTY_BUILDER_COMSUMER,
                 accountId
         );
         assertNotNull(response);
@@ -190,7 +190,7 @@ public class AccountSpringBootTests {
                 Account.class,
                 null,
                 List.of(MediaType.APPLICATION_JSON),
-                Defaults.EMPTY_BUILDER_COMSUMER,
+                Constants.EMPTY_BUILDER_COMSUMER,
                 account.getEntityId()
         );
         assertNotNull(response);
@@ -199,14 +199,14 @@ public class AccountSpringBootTests {
         assertTotalPercentageIsCorrect(account, "100%");
     }
 
-    private ResponseEntity<?> newAccount(Account account) throws URISyntaxException {
+    private ResponseEntity<?> createAccount(Account account) throws URISyntaxException {
         ResponseEntity<?> response = makeAuthenticatedHttpRequest(
                 "/accounts",
                 HttpMethod.POST,
                 Account.class,
                 account,
                 List.of(MediaType.APPLICATION_JSON),
-                Defaults.EMPTY_BUILDER_COMSUMER
+                Constants.EMPTY_BUILDER_COMSUMER
         );
 
         assertNotNull(response);
@@ -219,7 +219,7 @@ public class AccountSpringBootTests {
                     Account.class,
                     null,
                     List.of(MediaType.APPLICATION_JSON),
-                    Defaults.EMPTY_BUILDER_COMSUMER
+                    Constants.EMPTY_BUILDER_COMSUMER
             );
 
             assertNotNull(response);
@@ -268,7 +268,7 @@ public class AccountSpringBootTests {
                 Object.class,
                 beneficiaryName,
                 List.of(MediaType.APPLICATION_JSON),
-                Defaults.EMPTY_BUILDER_COMSUMER,
+                Constants.EMPTY_BUILDER_COMSUMER,
                 accountId
         );
         assertNotNull(response);
@@ -281,7 +281,7 @@ public class AccountSpringBootTests {
                 Beneficiary.class,
                 null,
                 List.of(MediaType.APPLICATION_JSON),
-                Defaults.EMPTY_BUILDER_COMSUMER
+                Constants.EMPTY_BUILDER_COMSUMER
         );
         assertNotNull(response);
         Beneficiary newBeneficiary = (Beneficiary) response.getBody();
@@ -295,7 +295,7 @@ public class AccountSpringBootTests {
                 Void.class,
                 null,
                 List.of(MediaType.APPLICATION_JSON),
-                Defaults.EMPTY_BUILDER_COMSUMER
+                Constants.EMPTY_BUILDER_COMSUMER
         );
         assertNotNull(response);
         assertEquals(HttpStatus.NO_CONTENT,response.getStatusCode());
@@ -307,7 +307,7 @@ public class AccountSpringBootTests {
                 Beneficiary.class,
                 beneficiaryName,
                 List.of(MediaType.APPLICATION_JSON),
-                Defaults.EMPTY_BUILDER_COMSUMER
+                Constants.EMPTY_BUILDER_COMSUMER
         );
         assertNotNull(response);
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());

@@ -20,10 +20,10 @@ public class TokenGenerator {
         JwtClaimsSet.Builder builder = JwtClaimsSet.builder()
                 .issuedAt(Instant.now())
                 .expiresAt(Instant.now().plusSeconds(100000))
-                .subject(Defaults.SUBJECT)
-                .issuer(Defaults.ISSUER)
-                .audience(Defaults.AUDIENCE)
-                .claim(JwtConfig.SCOPE_CLAIM, Defaults.SCOPE);
+                .subject(Constants.SUBJECT)
+                .issuer(Constants.ISSUER)
+                .audience(Constants.AUDIENCE)
+                .claim(JwtConfig.SCOPE_CLAIM, Constants.SCOPE);
         consumer.accept(builder);
         JwtEncoderParameters parameters = JwtEncoderParameters.from(builder.build());
         return this.jwtEncoder.encode(parameters).getTokenValue();
