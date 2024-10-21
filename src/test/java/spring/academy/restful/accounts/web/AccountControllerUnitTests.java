@@ -99,7 +99,7 @@ public class AccountControllerUnitTests {
     }
 
     @Test
-    @WithMockUser(username = "johnsmith", authorities = {"SCOPE_rewards: CUSTOMER"})
+    @WithMockUser(username = "johnsmith", authorities = {"SCOPE_rewards:CUSTOMER"})
     public void creatingAccountRespondsForbidden() throws Exception {
         Account testAccount = new Account("1234512345", "Mary Jones");
 
@@ -157,6 +157,7 @@ public class AccountControllerUnitTests {
     }
 
     @Test
+    @WithMockUser(username = "johnsmith", authorities = {"SCOPE_rewards:CUSTOMER"})
     public void shouldAddBeneficiary() throws Exception {
         doAnswer((a) -> {
                     assertTrue(Long.valueOf(0L).equals(a.getArgument(0)));
@@ -175,6 +176,7 @@ public class AccountControllerUnitTests {
     }
 
     @Test
+    @WithMockUser(username = "johnsmith", authorities = {"SCOPE_rewards:CUSTOMER"})
     public void shouldRemoveUniqueBeneficiary() throws Exception {
 
         String beneficiaryName = "Rufo";
@@ -242,6 +244,7 @@ public class AccountControllerUnitTests {
     }
 
     @Test
+    @WithMockUser(username = "johnsmith", authorities = {"SCOPE_rewards:CUSTOMER"})
     public void removeNonExistingBeneficiaryReturnsNotFound() throws Exception {
         String beneficiaryName = "Rufox";
         Account account = new Account("1234567890", "John Doe");

@@ -15,7 +15,11 @@ public class SecurityConfiguration {
         http
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.GET, "/accounts/**").hasAnyAuthority("SCOPE_rewards:CUSTOMER", "SCOPE_rewards:BANKER")
-                        .requestMatchers(HttpMethod.POST, "/accounts/**").hasAuthority("SCOPE_rewards:BANKER")
+                        .requestMatchers(HttpMethod.POST, "/accounts/{accountId}/beneficiaries").hasAnyAuthority("SCOPE_rewards:CUSTOMER", "SCOPE_rewards:BANKER")
+                        .requestMatchers(HttpMethod.DELETE, "/accounts/{accountId}/beneficiaries/{beneficiaryId}").hasAnyAuthority("SCOPE_rewards:CUSTOMER", "SCOPE_rewards:BANKER")
+                        .requestMatchers(HttpMethod.PUT, "/accounts/{accountId}").hasAnyAuthority("SCOPE_rewards:CUSTOMER", "SCOPE_rewards:BANKER")
+                        .requestMatchers(HttpMethod.POST, "/accounts").hasAuthority("SCOPE_rewards:BANKER")
+                        .requestMatchers(HttpMethod.DELETE, "/accounts/{accountId}").hasAuthority("SCOPE_rewards:BANKER")
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer((oauth2) -> oauth2.jwt(Customizer.withDefaults()))
