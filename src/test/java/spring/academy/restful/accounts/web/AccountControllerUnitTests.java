@@ -52,6 +52,7 @@ public class AccountControllerUnitTests {
     private AccountManager accountManager;
 
     @Test
+    @WithMockUser(username = "John Doe", authorities = {"SCOPE_rewards:CUSTOMER"})
     public void shouldGetAccountDetails() throws Exception {
 
         given(accountManager.getAccount(0L))

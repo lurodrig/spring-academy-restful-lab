@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import spring.academy.restful.common.money.Percentage;
+import spring.academy.restful.config.JwtConfig;
 import spring.academy.restful.jwt.Constants;
 import spring.academy.restful.jwt.TokenGenerator;
 import spring.academy.restful.rewards.internal.account.Account;
@@ -76,13 +77,19 @@ public class AccountIntegrationTests {
 
     @Test
     public void shouldGetAccount() {
+
+        Consumer<JwtClaimsSet.Builder> claimSet =
+                claims -> claims
+                        .subject("Keith and Keri Donald")
+                        .claim(JwtConfig.SCOPE_CLAIM,"rewards:CUSTOMER");
+
         ResponseEntity<?> response = makeAuthenticatedHttpRequest(
                 "/accounts/0",
                 HttpMethod.GET,
                 Account.class,
                 null,
                 List.of(MediaType.APPLICATION_JSON),
-                Constants.EMPTY_BUILDER_COMSUMER
+                claimSet
         );
         assertNotNull(response);
         Account account = (Account) response.getBody();
@@ -93,6 +100,24 @@ public class AccountIntegrationTests {
         assertEquals(Percentage.valueOf("50%"), account.getBeneficiary("Annabelle").getAllocationPercentage());
         assertEquals(Percentage.valueOf("50%"), account.getBeneficiary("Corgan").getAllocationPercentage());
 
+    }
+
+    @Test
+    public void shouldRespondWithForbiddenGettingAccount() {
+        Consumer<JwtClaimsSet.Builder> claimSet =
+                claims -> claims
+                        .subject("Wrong username")
+                        .claim(JwtConfig.SCOPE_CLAIM,"rewards:CUSTOMER");
+        ResponseEntity<?> response = makeAuthenticatedHttpRequest(
+                "/accounts/0",
+                HttpMethod.GET,
+                Account.class,
+                null,
+                List.of(MediaType.APPLICATION_JSON),
+                claimSet
+        );
+        assertNotNull(response);
+        assertEquals(HttpStatus.FORBIDDEN,response.getStatusCode(),"Response status should be: " + HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -138,13 +163,18 @@ public class AccountIntegrationTests {
         );
         assertNotNull(response);
 
+        Consumer<JwtClaimsSet.Builder> claimSet =
+                claims -> claims
+                        .subject("Coral Villareal Betancourt")
+                        .claim(JwtConfig.SCOPE_CLAIM,"rewards:CUSTOMER");
+
         response = makeAuthenticatedHttpRequest(
                 "/accounts/{accountId}",
                 HttpMethod.GET,
                 Account.class,
                 null,
                 List.of(MediaType.APPLICATION_JSON),
-                Constants.EMPTY_BUILDER_COMSUMER,
+                claimSet,
                 accountId
         );
         assertNotNull(response);
@@ -178,11 +208,10 @@ public class AccountIntegrationTests {
                 Void.class,
                 allocationPercentages,
                 List.of(MediaType.APPLICATION_JSON),
-                Constants.EMPTY_BUILDER_COMSUMER,
+                claimSet,
                 accountId
         );
         assertNotNull(response);
-
 
         response = makeAuthenticatedHttpRequest(
                 "/accounts/{accountId}",
@@ -190,7 +219,7 @@ public class AccountIntegrationTests {
                 Account.class,
                 null,
                 List.of(MediaType.APPLICATION_JSON),
-                Constants.EMPTY_BUILDER_COMSUMER,
+                claimSet,
                 account.getEntityId()
         );
         assertNotNull(response);
@@ -213,13 +242,18 @@ public class AccountIntegrationTests {
         // If the status is not CREATED do not bother continuing processing the response, something
         // wrong has happened, probably a 409, lets the caller of the method deal with it
         if (response.getStatusCode() == HttpStatus.CREATED) {
+            // Use the account name as the username, if not our method authorization will deny the request
+            Consumer<JwtClaimsSet.Builder> claimSet =
+                    claims -> claims
+                            .subject(account.getName())
+                            .claim(JwtConfig.SCOPE_CLAIM,"rewards:CUSTOMER");
             response = makeAuthenticatedHttpRequest(
                     String.valueOf(new URI(Objects.requireNonNull(response.getHeaders().get("Location")).getFirst())),
                     HttpMethod.GET,
                     Account.class,
                     null,
                     List.of(MediaType.APPLICATION_JSON),
-                    Constants.EMPTY_BUILDER_COMSUMER
+                    claimSet
             );
 
             assertNotNull(response);
@@ -242,10 +276,10 @@ public class AccountIntegrationTests {
             Class responseClass,
             Object request,
             List<MediaType> acceptedMediaTypes,
-            Consumer<JwtClaimsSet.Builder> consumer,
+            Consumer<JwtClaimsSet.Builder> userClaimSet,
             Object... urlPathVariable) {
         HttpHeaders httpRequestHeaders = new HttpHeaders();
-        httpRequestHeaders.add(AUTHORIZATION_HEADER, BEARER_AUTHENTICATION + tokenGenerator.generate(consumer));
+        httpRequestHeaders.add(AUTHORIZATION_HEADER, BEARER_AUTHENTICATION + tokenGenerator.generate(userClaimSet));
         if (acceptedMediaTypes != null) {
             httpRequestHeaders.setAccept(acceptedMediaTypes);
         }
