@@ -13,7 +13,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import spring.academy.restful.accounts.AccountManager;
 import spring.academy.restful.common.money.Percentage;
-import spring.academy.restful.config.SecurityConfiguration;
+import spring.academy.restful.config.SecurityConfig;
+import spring.academy.restful.config.authz.AccountAuthorization;
 import spring.academy.restful.jwt.Constants;
 import spring.academy.restful.rewards.internal.account.Account;
 import spring.academy.restful.rewards.internal.account.Beneficiary;
@@ -35,13 +36,14 @@ import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(AccountController.class)
-@Import({SecurityConfiguration.class})
+@Import({SecurityConfig.class, AccountAuthorization.class})
 @WithMockUser(username = Constants.SUBJECT, authorities = {"SCOPE_rewards:BANKER", "SCOPE_rewards:CUSTOMER"})
 public class AccountControllerUnitTests {
 
@@ -220,7 +222,8 @@ public class AccountControllerUnitTests {
                 new Beneficiary("Cobol", new Percentage(0.25)),
                 beneficiaryToBeDeleted);
 
-        Map<String, Percentage> allocationPercentages = Map.of("Pascal", new Percentage(0.33),
+        Map<String, Percentage> allocationPercentages = Map.of(
+                "Pascal", new Percentage(0.33),
                 "Ada", new Percentage(0.33),
                 "Cobol", new Percentage(0.33));
 
@@ -242,6 +245,28 @@ public class AccountControllerUnitTests {
                 .andExpect(status().isNoContent());
 
         verify(accountManager).removeBeneficiary(0L, beneficiaryName, allocationPercentages);
+    }
+
+
+    @Test
+    @WithMockUser(username = "johnsmith", authorities = {"SCOPE_rewards:CUSTOMER"})
+    public void updateAllocationPercentagesReturnForbidden() throws Exception {
+        Map<String, Percentage> allocationPercentages = Map.of(
+                "Pascal", new Percentage(0.33),
+                "Ada", new Percentage(0.33),
+                "Cobol", new Percentage(0.33));
+
+        String differentUsername = "janesmith";
+        Long accountId = 0L;
+        Account mockedAccount = mock(Account.class);
+
+        given(accountManager.getAccount(accountId)).willReturn(mockedAccount);
+        given(accountManager.getAccount(accountId).getName()).willReturn(differentUsername);
+
+        mockMvc.perform(put("/accounts/{accountId}",accountId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(asJsonString(allocationPercentages)))
+                .andExpect(status().isForbidden());
     }
 
     @Test

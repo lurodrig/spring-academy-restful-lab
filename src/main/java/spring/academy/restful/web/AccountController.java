@@ -7,6 +7,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -147,6 +148,7 @@ public class AccountController {
         accountManager.removeBeneficiary(accountId, beneficiaryName, new HashMap<String, Percentage>());
     }
 
+    @PreAuthorize("@authz.isOwnerOfTheAccount(#accountId)")
     @PutMapping(value = "/accounts/{accountId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateBeneficiaryAllocationPercentages(@RequestBody Map<String, Percentage> allocationPercentages,
