@@ -7,10 +7,15 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import spring.academy.restful.accounts.AccountManager;
 import spring.academy.restful.common.money.Percentage;
+import spring.academy.restful.config.SecurityConfig;
+import spring.academy.restful.config.authz.AccountAuthorization;
+import spring.academy.restful.jwt.Constants;
 import spring.academy.restful.rewards.internal.account.Account;
 import spring.academy.restful.rewards.internal.account.Beneficiary;
 import spring.academy.restful.web.AccountController;
@@ -31,13 +36,16 @@ import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(AccountController.class)
-public class AccountControllerBootTests {
+@Import({SecurityConfig.class, AccountAuthorization.class})
+@WithMockUser(username = Constants.SUBJECT, authorities = {"SCOPE_rewards:BANKER", "SCOPE_rewards:CUSTOMER"})
+public class AccountControllerUnitTests {
 
     @Autowired
     private MockMvc mockMvc;
@@ -46,7 +54,8 @@ public class AccountControllerBootTests {
     private AccountManager accountManager;
 
     @Test
-    public void accountDetails() throws Exception {
+    @WithMockUser(username = "John Doe", authorities = {"SCOPE_rewards:CUSTOMER"})
+    public void shouldGetAccountDetails() throws Exception {
 
         given(accountManager.getAccount(0L))
                 .willReturn(new Account("1234567890", "John Doe"));
@@ -62,7 +71,7 @@ public class AccountControllerBootTests {
     }
 
     @Test
-    public void accountDetailsFail() throws Exception {
+    public void nonExistingAccountIdGettingDetailsReturnsNotFound() throws Exception {
 
         given(accountManager.getAccount(any(Long.class)))
                 .willThrow(new IllegalArgumentException("No such account with id " + 9999L));
@@ -75,8 +84,7 @@ public class AccountControllerBootTests {
     }
 
     @Test
-    public void createAccount() throws Exception {
-
+    public void shouldCreateAccount() throws Exception {
         Account testAccount = new Account("1234512345", "Mary Jones");
         testAccount.setEntityId(21L);
 
@@ -91,11 +99,21 @@ public class AccountControllerBootTests {
                 .andExpect(header().string("Location", "http://localhost/accounts/21"));
 
         verify(accountManager, times(1)).save(any(Account.class));
-
     }
 
     @Test
-    public void accountSummary() throws Exception {
+    @WithMockUser(username = "johnsmith", authorities = {"SCOPE_rewards:CUSTOMER"})
+    public void creatingAccountRespondsForbidden() throws Exception {
+        Account testAccount = new Account("1234512345", "Mary Jones");
+
+        mockMvc.perform(post("/accounts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(asJsonString(testAccount)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    public void shouldGetAllAccounts() throws Exception {
 
         List<Account> mockedListOfAccounts = List.of(new Account("123456789", "John Doe"));
         given(accountManager.getAllAccounts()).willReturn(mockedListOfAccounts);
@@ -110,7 +128,7 @@ public class AccountControllerBootTests {
     }
 
     @Test
-    public void getExistingBeneficiary() throws Exception {
+    public void shouldGetExistingBeneficiary() throws Exception {
 
         String beneficiaryName = "Rufo";
 
@@ -129,7 +147,7 @@ public class AccountControllerBootTests {
     }
 
     @Test
-    public void getNonExistingBeneficiary() throws Exception {
+    public void getNonExistingBeneficiaryReturnsNotFound() throws Exception {
 
         String beneficiaryName = "Rufox";
 
@@ -142,7 +160,8 @@ public class AccountControllerBootTests {
     }
 
     @Test
-    public void addBeneficiary() throws Exception {
+    @WithMockUser(username = "johnsmith", authorities = {"SCOPE_rewards:CUSTOMER"})
+    public void shouldAddBeneficiary() throws Exception {
         doAnswer((a) -> {
                     assertTrue(Long.valueOf(0L).equals(a.getArgument(0)));
                     assertTrue("Rufo".equals(a.getArgument(1)));
@@ -160,7 +179,8 @@ public class AccountControllerBootTests {
     }
 
     @Test
-    public void removeUniqueBeneficiary() throws Exception {
+    @WithMockUser(username = "johnsmith", authorities = {"SCOPE_rewards:CUSTOMER"})
+    public void shouldRemoveUniqueBeneficiary() throws Exception {
 
         String beneficiaryName = "Rufo";
         Account account = new Account("1234567890", "John Doe");
@@ -191,7 +211,7 @@ public class AccountControllerBootTests {
     // With the current implementation this test will fail: AccountController.resetAllocationPercentages makes the
     // allocation percentages sum equals to 100%. I developed this test assuming equal distribution of the
     // percentages between the beneficiaries (see solution proposed in the lab 40-boot-test on spring.academy
-    public void removeNonUniqueBeneficiary() throws Exception {
+    public void shouldRemoveNonUniqueBeneficiary() throws Exception {
         String beneficiaryName = "Rufo";
         Percentage percentage = new Percentage(0.25);
         Beneficiary beneficiaryToBeDeleted = new Beneficiary(beneficiaryName, percentage);
@@ -202,7 +222,8 @@ public class AccountControllerBootTests {
                 new Beneficiary("Cobol", new Percentage(0.25)),
                 beneficiaryToBeDeleted);
 
-        Map<String, Percentage> allocationPercentages = Map.of("Pascal", new Percentage(0.33),
+        Map<String, Percentage> allocationPercentages = Map.of(
+                "Pascal", new Percentage(0.33),
                 "Ada", new Percentage(0.33),
                 "Cobol", new Percentage(0.33));
 
@@ -226,8 +247,31 @@ public class AccountControllerBootTests {
         verify(accountManager).removeBeneficiary(0L, beneficiaryName, allocationPercentages);
     }
 
+
     @Test
-    public void removeNonExistingBeneficiary() throws Exception {
+    @WithMockUser(username = "johnsmith", authorities = {"SCOPE_rewards:CUSTOMER"})
+    public void updateAllocationPercentagesReturnForbidden() throws Exception {
+        Map<String, Percentage> allocationPercentages = Map.of(
+                "Pascal", new Percentage(0.33),
+                "Ada", new Percentage(0.33),
+                "Cobol", new Percentage(0.33));
+
+        String differentUsername = "janesmith";
+        Long accountId = 0L;
+        Account mockedAccount = mock(Account.class);
+
+        given(accountManager.getAccount(accountId)).willReturn(mockedAccount);
+        given(accountManager.getAccount(accountId).getName()).willReturn(differentUsername);
+
+        mockMvc.perform(put("/accounts/{accountId}",accountId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(asJsonString(allocationPercentages)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "johnsmith", authorities = {"SCOPE_rewards:CUSTOMER"})
+    public void removeNonExistingBeneficiaryReturnsNotFound() throws Exception {
         String beneficiaryName = "Rufox";
         Account account = new Account("1234567890", "John Doe");
 
