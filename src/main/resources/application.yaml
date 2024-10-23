@@ -1,8 +1,20 @@
 spring:
   application:
     name: spring-academy-restful-lab
+  profiles:
+    active: dev
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
   # We are using hsqldb in server mode, so we need to tell spring to explicitly run the init scripts
   # See https://docs.spring.io/spring-boot/how-to/data-initialization.html
+  app:
+    datasource:
+      jdbc-url: 'jdbc:hsqldb:hsql://localhost/rewards'
+      username: sa
   sql:
     init:
       schema-locations: 'classpath:/devdb/schema.sql'
@@ -19,16 +31,35 @@ spring:
       resourceserver:
         jwt:
           public-key-location: classpath:keys/authz.pub
-
-# I want to see in the console the database connection pool properties
 logging:
   level:
     com.zaxxer.hikari: DEBUG
     org.springframework.security: TRACE
 
-# Custom database properties
-app:
+---
+spring:
+  config:
+    activate:
+      on-profile: test
+  # We are using hsqldb in server mode, so we need to tell spring to explicitly run the init scripts
+  # See https://docs.spring.io/spring-boot/how-to/data-initialization.html
   datasource:
-    jdbc-url: 'jdbc:hsqldb:hsql://localhost/rewards'
-    driver-class-name: org.hsqldb.jdbc.JDBCDriver
-    username: sa
+    url: 'jdbc:mysql://localhost:3306/rewards'
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: rewards-password
+  sql:
+    init:
+      schema-locations: 'classpath:/testdb/mysql_schema.sql'
+      data-locations: 'classpath:/testdb/mysql_data.sql'
+      mode: always
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://dev-3luybo0t8652zavi.us.auth0.com/
+          jwk-set-uri: https://dev-3luybo0t8652zavi.us.auth0.com/.well-known/jwks.json
+          audiences: https://api.rewards.com
+logging:
+  level:
+    org.springframework.security: TRACE
