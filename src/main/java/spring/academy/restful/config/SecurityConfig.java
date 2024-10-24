@@ -22,6 +22,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/accounts/{accountId}").hasAnyAuthority("SCOPE_rewards:CUSTOMER", "SCOPE_rewards:BANKER")
                         .requestMatchers(HttpMethod.POST, "/accounts").hasAuthority("SCOPE_rewards:BANKER")
                         .requestMatchers(HttpMethod.DELETE, "/accounts/{accountId}").hasAuthority("SCOPE_rewards:BANKER")
+                        .requestMatchers("/actuator/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer((oauth2) -> oauth2.jwt(Customizer.withDefaults()))

@@ -3,7 +3,11 @@ spring:
     name: spring-academy-restful-lab
   profiles:
     active: dev
-
+management:
+  endpoints:
+   web:
+     exposure:
+       include: "*"
 ---
 spring:
   config:
