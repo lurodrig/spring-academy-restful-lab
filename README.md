@@ -33,4 +33,3 @@ $ curl http://localhost:8080/accounts
 
 Model, JPA repositories, REST Controllers and SQL scripts taken from [spring academy labs](https://spring.academy/courses/spring-boot)
 
-

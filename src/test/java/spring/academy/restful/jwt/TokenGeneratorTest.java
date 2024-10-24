@@ -43,6 +43,7 @@ public class TokenGeneratorTest {
     void generateDefaultTokenWhenEmptyBuilderIsValid() {
         String token = tokenGenerator.generate(Constants.EMPTY_BUILDER_COMSUMER);
         assertNotNull(token);
+        log.info("Default token {}", token);
         assertEquals(Constants.SUBJECT, jwtDecoder.decode(token).getClaim(Claims.SUBJECT));
         assertEquals(Constants.ISSUER, jwtDecoder.decode(token).getClaim(Claims.ISSUER));
         assertEquals(Constants.AUDIENCE, jwtDecoder.decode(token).getClaim(Claims.AUDIENCE));
@@ -53,6 +54,7 @@ public class TokenGeneratorTest {
     void generateTokenWithWrongAudienceThrowsExceptionWhenDecoding() {
         String token = tokenGenerator.generate((claims) -> claims.audience(List.of("https://wrong")));
         assertNotNull(token);
+        log.info("Wrong audience token {}", token);
         Exception exception = assertThrows(JwtValidationException.class, () -> {
             jwtDecoder.decode(token);
         });
@@ -66,6 +68,7 @@ public class TokenGeneratorTest {
                 .issuedAt(Instant.now().minusSeconds(3600))
                 .expiresAt(Instant.now().minusSeconds(3599))
         );
+        log.info("Expired token {}", token);
         Exception exception = assertThrows(JwtValidationException.class, () -> {
             jwtDecoder.decode(token);
         });
