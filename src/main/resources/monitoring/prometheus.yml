@@ -1,0 +1,10 @@
+scrape_configs:
+  - job_name: 'spring-boot-application'
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 15s # This can be adjusted based on our needs
+    static_configs:
+      - targets: ['localhost:8080']
+    oauth2:
+      client_id: CLIENT_ID
+      client_secret: CLIENT_SECRET
+      token_url: TOKEN_URL
