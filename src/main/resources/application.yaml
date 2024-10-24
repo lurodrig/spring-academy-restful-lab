@@ -70,4 +70,4 @@ spring:
           audiences: https://api.rewards.com
 logging:
   level:
-    org.springframework.security: INFO
+    org.springframework.security: TRACE

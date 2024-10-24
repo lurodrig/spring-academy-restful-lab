@@ -5,6 +5,8 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:8080']
     oauth2:
-      client_id: CLIENT_ID
-      client_secret: CLIENT_SECRET
-      token_url: TOKEN_URL
+      client_id: 'CLIENT_ID'
+      client_secret: 'CLIENT_SECRET'
+      token_url: 'TOKEN_URL'
+      endpoint_params:
+        audience: 'https://api.rewards.com'
