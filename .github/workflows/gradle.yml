@@ -32,6 +32,8 @@ jobs:
     # See: https://github.com/gradle/actions/blob/main/setup-gradle/README.md
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4 # v4.0.0
+
+    - name: Create the gradle wrapper
       run: gradle wrapper
 
     - name: Build with Gradle Wrapper
