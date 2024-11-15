@@ -46,8 +46,8 @@ spring:
   datasource:
     url: 'jdbc:mysql://localhost:3306/rewards'
     driver-class-name: com.mysql.cj.jdbc.Driver
-    username: root
-    password: rewards-password
+    username: ${REWARDS_TEST_DB_USERNAME}
+    password: ${REWARDS_TEST_DB_PASSWORD}
   sql:
     init:
       schema-locations: 'classpath:/testdb/mysql_schema.sql'
