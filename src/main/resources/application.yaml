@@ -3,6 +3,14 @@ spring:
     name: spring-academy-restful-lab
   profiles:
     active: dev
+management:
+  endpoints:
+   web:
+     exposure:
+       include: "*"
+  endpoint:
+    health:
+      show-details: always
 
 ---
 spring:
@@ -33,8 +41,8 @@ spring:
           public-key-location: classpath:keys/authz.pub
 logging:
   level:
-    com.zaxxer.hikari: DEBUG
-    org.springframework.security: TRACE
+    com.zaxxer.hikari: INFO
+    org.springframework.security: INFO
 
 ---
 spring:
