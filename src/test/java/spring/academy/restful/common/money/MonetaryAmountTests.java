@@ -1,8 +1,6 @@
 package spring.academy.restful.common.money;
 
 import org.junit.jupiter.api.Test;
-import spring.academy.restful.common.money.MonetaryAmount;
-import spring.academy.restful.common.money.Percentage;
 
 import java.math.BigDecimal;
 

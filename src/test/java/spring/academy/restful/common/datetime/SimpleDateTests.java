@@ -1,7 +1,6 @@
 package spring.academy.restful.common.datetime;
 
 import org.junit.jupiter.api.Test;
-import spring.academy.restful.common.datetime.SimpleDate;
 
 import java.util.Calendar;
 import java.util.Date;
