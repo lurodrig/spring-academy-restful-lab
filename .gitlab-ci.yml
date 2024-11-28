@@ -6,7 +6,8 @@ build-gradle-project:
     - ./gradlew test
 
   artifacts:
-    paths: build/test/results/test
+    paths: 
+      - 'build/test/results/test'
     reports:
       junit: TEST-*.xml
 
