@@ -2,8 +2,7 @@ build-gradle-project:
   image: gradle:jdk21-jammy
 
   script:
-    - pwd
-    - ls -la
+    - gradle wrapper
     - ./gradlew build
 
   artifacts:
