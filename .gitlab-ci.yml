@@ -1,8 +1,9 @@
 build-gradle-project:
-  image: eclipse-temurin:latest
+  image: gradle:jdk21-jammy
 
   script:
-    - gradle wrapper
+    - pwd
+    - ls -la
     - ./gradlew build
 
   artifacts:
