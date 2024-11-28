@@ -13,3 +13,14 @@ build-gradle-project:
   artifacts:
     reports:
       junit: '**/build/test-results/**/TEST-*.xml'
+
+  variables:
+    GRADLE_USER_HOME: $CI_PROJECT_DIR/.gradle
+
+  cache:
+    paths:
+      - .gradle/wrapper
+    key:
+      files:
+        - gradle/wrapper/gradle-wrapper.properties
+
