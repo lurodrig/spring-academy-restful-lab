@@ -30,23 +30,15 @@ jobs:
     - name: Create the gradle wrapper
       run: gradle wrapper
 
-    - name: Cache SonarQube Cloud packages
-      uses: actions/cache@v4
-      with:
-        path: ~/.sonar/cache
-        key: ${{ runner.os }}-sonar
-        restore-keys: ${{ runner.os }}-sonar
+    - name: Build (no tests)
+      run: gradle --build-cache assemble
 
-#    - name: Cache Gradle packages
-#      uses: actions/cache@v4
-#      with:
-#        path: ~/.gradle/caches
-#        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
-#        restore-keys: ${{ runner.os }}-gradle
+    - name: Test
+      run: gradle --build-cache test
 
-    - name: Build and analyze
+    - name: Analyze code
       env:
         GITHUB_TOKEN: ${{ secrets.SONAR_GITHUB_TOKEN }}  # Needed to get PR information, if any
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      run: ./gradlew --build-cache build sonar --info
+      run: ./gradlew --build-cache sonar
 
