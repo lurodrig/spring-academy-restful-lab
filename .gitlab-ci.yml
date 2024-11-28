@@ -1,20 +1,15 @@
-build-job:
-  stage: build
-  script:
-    - env 
+build-gradle-project:
+  image: eclipse-temurin:latest
 
-test-job1:
-  stage: test
   script:
+    - echo "Lets have a look at the environment"
+    - uname -a
+    - cat /etc/*release*
+    - java --version
+    - ./gradlew --version
     - env
+    - ./gradlew build
 
-test-job2:
-  stage: test
-  script:
-    - env 
-
-deploy-prod:
-  stage: deploy
-  script:
-    - env
-  environment: production
+  artifacts:
+    reports:
+      junit: '**/build/test-results/**/TEST-*.xml'
