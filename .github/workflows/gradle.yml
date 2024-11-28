@@ -30,7 +30,7 @@ jobs:
         build-scan-publish: true
 
     - name: Create the gradle wrapper
-      run: gradle wrapper
+      run: gradle --scan wrapper
 
     - name: Build (no tests)
       run: gradle --build-cache --scan assemble
