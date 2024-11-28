@@ -1,0 +1,35 @@
+image: gradle:alpine
+
+stages:
+  - build
+  - test
+  - analyze
+
+variables:
+  GRADLE_USER_HOME: $CI_PROJECT_DIR/.gradle
+
+cache:
+  key:
+    files:
+      - gradle/wrapper/gradle-wrapper.properties
+  paths:
+      - .gradle/wrapper
+
+build:
+  stage: build
+  script: gradle --build-cache assemble
+
+test:
+  stage: test
+  script: gradle --build-cache test
+  artifacts:
+    when: always
+    reports:
+      junit: '**/build/test-results/**/TEST-*.xml'
+      coverage_report:
+        coverage_format: jacoco
+        path: build/reports/jacoco/test/jacocoTestReport.xml
+
+analyze:
+  stage: analyze
+  script: gradle --build-cache sonar --info

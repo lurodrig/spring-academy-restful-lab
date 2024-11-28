@@ -1,7 +1,6 @@
 package spring.academy.restful.common.money;
 
 import org.junit.jupiter.api.Test;
-import spring.academy.restful.common.money.Percentage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
