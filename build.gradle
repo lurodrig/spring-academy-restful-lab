@@ -41,10 +41,17 @@ tasks.named('test') {
 	testLogging {
 		events "passed", "skipped", "failed"
 	}
+	finalizedBy jacocoTestReport
+}
+
+jacoco {
+    reportsDirectory = layout.buildDirectory.dir('reports/jacoco')
 }
 
 jacocoTestReport {
+	dependsOn test
 	reports {
+		csv.required = false
 		xml.required = true
 	}
 }
