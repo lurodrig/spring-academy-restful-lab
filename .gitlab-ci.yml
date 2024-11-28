@@ -2,12 +2,7 @@ build-gradle-project:
   image: eclipse-temurin:latest
 
   script:
-    - echo "Lets have a look at the environment"
-    - uname -a
-    - cat /etc/*release*
-    - java --version
-    - ./gradlew --version
-    - env
+    - gradle wrapper
     - ./gradlew build
 
   artifacts:
