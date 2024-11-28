@@ -61,5 +61,6 @@ sonar {
 		property "sonar.projectKey", "lurodrig_spring-academy-restful-lab"
 		property "sonar.organization", "lurodrig"
 		property "sonar.host.url", "https://sonarcloud.io"
+		property "sonar.coverage.jacoco.xmlReportPaths", "build/reports/jacoco/test/jacocoTestReport.xml"
 	}
 }
