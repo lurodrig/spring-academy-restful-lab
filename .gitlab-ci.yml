@@ -1,21 +1,20 @@
-build-gradle-project:
-  image: gradle:jdk21-jammy
+image: gradle:alpine
 
-  script:
-    - gradle wrapper
-    - ./gradlew test
+stages:
+  - build
+  - test
 
-  artifacts:
-    reports:
-      junit: '**/build/test-results/**/TEST-*.xml'
-
-  variables:
-    GRADLE_USER_HOME: $CI_PROJECT_DIR/.gradle
-
-  cache:
-    paths:
+cache:
+  key:
+    files:
+      - gradle/wrapper/gradle-wrapper.properties
+  paths:
       - .gradle/wrapper
-    key:
-      files:
-        - gradle/wrapper/gradle-wrapper.properties
 
+build:
+  stage: build
+  script: gradle --build-cache assemble
+
+test:
+  stage: test
+  script: gradle check
