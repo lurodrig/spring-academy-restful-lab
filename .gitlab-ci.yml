@@ -3,7 +3,7 @@ build-gradle-project:
 
   script:
     - gradle wrapper
-    - ./gradlew build
+    - ./gradlew test
 
   artifacts:
     reports:
