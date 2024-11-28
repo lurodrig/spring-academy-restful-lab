@@ -6,10 +6,8 @@ build-gradle-project:
     - ./gradlew test
 
   artifacts:
-    paths: 
-      - 'build/test/results/test'
     reports:
-      junit: TEST-*.xml
+      junit: '**/build/test-results/**/TEST-*.xml'
 
   variables:
     GRADLE_USER_HOME: $CI_PROJECT_DIR/.gradle
