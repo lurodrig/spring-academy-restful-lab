@@ -84,6 +84,19 @@ public class AccountControllerUnitTests {
     }
 
     @Test
+    public void getAccountDetailsReturnsNotFoundWhenAccountManagerReturnsNull() throws Exception {
+
+        given(accountManager.getAccount(any(Long.class)))
+                .willReturn(null);
+
+        mockMvc.perform((get("/accounts/9999")))
+                .andExpect(status().isNotFound());
+
+        verify(accountManager, times(1)).getAccount(any(Long.class));
+
+    }
+
+    @Test
     public void shouldCreateAccount() throws Exception {
         Account testAccount = new Account("1234512345", "Mary Jones");
         testAccount.setEntityId(21L);
@@ -278,6 +291,17 @@ public class AccountControllerUnitTests {
         given(accountManager.getAccount(anyLong())).willReturn(account);
 
         mockMvc.perform(get("/accounts/{accountId}/beneficiaries/{beneficiaryName}", anyLong(), beneficiaryName))
+                .andExpect(status().isNotFound());
+
+        verify(accountManager).getAccount(anyLong());
+    }
+
+    @Test
+    @WithMockUser(username = "johnsmith", authorities = {"SCOPE_rewards:CUSTOMER"})
+    public void removeBeneficiaryFromNonExistingAccountReturnsNotFound() throws Exception {
+        given(accountManager.getAccount(anyLong())).willReturn(null);
+
+        mockMvc.perform(get("/accounts/{accountId}/beneficiaries/{beneficiaryName}", anyLong(), "Rufo"))
                 .andExpect(status().isNotFound());
 
         verify(accountManager).getAccount(anyLong());
