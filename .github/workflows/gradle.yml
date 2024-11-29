@@ -56,3 +56,10 @@ jobs:
         name: unit-test-reports
         path: build/test-results/**/TEST-*.xml
 
+    - name: Problems report
+      uses: actions/upload-artifacts@v4
+      with:
+        name: problems-report
+        path: build/reports/problems
+
+
