@@ -44,3 +44,28 @@ jobs:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       run: ./gradlew --build-cache sonar
 
+    - name: Archive code coverage xml report (jacoco)
+      uses: actions/upload-artifact@v4
+      with:
+        name: code-coverage-xml-report
+        path: build/reports/jacoco/test/jacocoTestReport.xml
+
+    - name: Archive code coverage html report (jacoco)
+      uses: actions/upload-artifact@v4
+      with:
+        name: code-coverage-html-report
+        path: build/reports/jacoco/test/html
+
+    - name: Archive unit tests reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: unit-test-reports
+        path: build/test-results/**/TEST-*.xml
+
+    - name: Problems report
+      uses: actions/upload-artifact@v4
+      with:
+        name: problems-report
+        path: build/reports/problems/problems-report.html
+
+
