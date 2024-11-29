@@ -28,6 +28,7 @@ jobs:
       uses: gradle/actions/setup-gradle@v4
       with:
         build-scan-publish: true
+        cache-read-only: false
 
 #    - name: Create the gradle wrapper
 #      run: gradle --scan wrapper
