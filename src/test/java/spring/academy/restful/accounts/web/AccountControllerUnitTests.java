@@ -84,6 +84,19 @@ public class AccountControllerUnitTests {
     }
 
     @Test
+    public void getAccountDetailsReturnsNotFoundWhenAccountManagerReturnsNull() throws Exception {
+
+        given(accountManager.getAccount(any(Long.class)))
+                .willReturn(null);
+
+        mockMvc.perform((get("/accounts/9999")))
+                .andExpect(status().isNotFound());
+
+        verify(accountManager, times(1)).getAccount(any(Long.class));
+
+    }
+
+    @Test
     public void shouldCreateAccount() throws Exception {
         Account testAccount = new Account("1234512345", "Mary Jones");
         testAccount.setEntityId(21L);
