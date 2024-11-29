@@ -28,6 +28,7 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -278,6 +279,17 @@ public class AccountControllerUnitTests {
         given(accountManager.getAccount(anyLong())).willReturn(account);
 
         mockMvc.perform(get("/accounts/{accountId}/beneficiaries/{beneficiaryName}", anyLong(), beneficiaryName))
+                .andExpect(status().isNotFound());
+
+        verify(accountManager).getAccount(anyLong());
+    }
+
+    @Test
+    @WithMockUser(username = "johnsmith", authorities = {"SCOPE_rewards:CUSTOMER"})
+    public void removeBeneficiaryFromNonExistingAccountReturnsNotFound() throws Exception {
+        given(accountManager.getAccount(anyLong())).willReturn(null);
+
+        mockMvc.perform(get("/accounts/{accountId}/beneficiaries/{beneficiaryName}", anyLong(), "Rufo"))
                 .andExpect(status().isNotFound());
 
         verify(accountManager).getAccount(anyLong());
